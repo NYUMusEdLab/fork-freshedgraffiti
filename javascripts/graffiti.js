@@ -18,11 +18,11 @@ var Graffiti = {
   
   paper: undefined,
   backgroundImage: undefined,
-  sourceText: 'Graffiti.js',
+  sourceText: 'Fresh Ed',
   textObj: undefined,
   drips: undefined,
   stackedPaths: [],
-  mode: 'waves',
+  mode: 'stackLetters',
   
   init: function(){
     var $window = $(window);
@@ -61,13 +61,21 @@ var Graffiti = {
   },
   
   onClick: function(mouseX, mouseY){
-    switch (this.mode){
+     switch (this.mode){
       case 'waves':
-        var startX = (mouseX > this.paper.width/2) ? this.paper.width : 0,
-          wave = this.makeWave(startX, mouseY, mouseX, this.paper.height);
+        var i = this.getRandomIndex(this.textObj),
+          letter = this.textObj[i],
+          stackSet = this.getStackSet(i);
         
-        wave.insertBefore(this.textObj);
-        // this.randomDrip(wave);
+        var letterToStack = _(stackSet).last() || letter,
+          clone = this.stackPath(letterToStack);
+        
+        clone.insertBefore(letterToStack);
+        this.stackedPaths[i].push(clone);
+        
+        // a bit of a hack to keep the original text and drips on top
+        this.textObj.toFront();
+        this.drips.toFront();
         break;
       case 'stackLetters':
         var i = this.getRandomIndex(this.textObj),
