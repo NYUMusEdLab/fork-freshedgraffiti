@@ -10,8 +10,6 @@
 	</style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.5/p5.min.js"></script>
   <script>
-	var brushDist = 5;
-	
 	var currStroke;
 	var strokeHistory = [];
 	var isDrawing;
@@ -19,13 +17,13 @@
 	
 	var isRedrawing;
 	var redrawStart;
+	var redrawDuration = 5.0;
+	var redrawMode = "duration";
 	
   function setup() {
     createCanvas(640, 480);
 		
 		strokeWeight(10);
-		//fill(0);
-		//noStroke();
   }
 
   function draw() {
@@ -46,25 +44,36 @@
 			background(255);
 			var index = frameCount - redrawStart;
 			
-			//If we redraw everything for the same duration
-			var percent = min(index / 1000, 1);
+			var percent = min(index / (redrawDuration * 30), 1);
 			
-			for(var i = 0; i < strokeHistory.length; ++i) {
-				drawPartialStroke(strokeHistory[i], percent);
+			if(redrawMode == 'duration') {
+				//If we redraw everything for the same duration
+				for(var i = 0; i < strokeHistory.length; ++i) {
+					drawPartialStroke(strokeHistory[i], percent);
+				}
+			} else if(redrawMode == 'speed_start') {
+				// If we redraw everything with the same speed
+				var longestStroke = 0;
+				
+				for(var i = 0; i < strokeHistory.length; ++i) {
+					longestStroke = max(longestStroke, strokeHistory[i].length);
+				}
+				
+				for(var i = 0; i < strokeHistory.length; ++i) {
+					drawPartialStroke(strokeHistory[i], min(percent * (longestStroke / strokeHistory[i].length), 1));
+				}
+			} else if(redrawMode == 'speed_end') {
+				// If we redraw everything with the same speed
+				var longestStroke = 0;
+				
+				for(var i = 0; i < strokeHistory.length; ++i) {
+					longestStroke = max(longestStroke, strokeHistory[i].length);
+				}
+				
+				for(var i = 0; i < strokeHistory.length; ++i) {
+					drawPartialStroke(strokeHistory[i], max((percent * longestStroke / strokeHistory[i].length) - (longestStroke / strokeHistory[i].length - 1), 0));
+				}
 			}
-			
-			// If we redraw everything with the same speed
-			// var percent = min(index / 60, 1);
-			// 
-			// var longestStroke = 0;
-			// 
-			// for(var i = 0; i < strokeHistory.length; ++i) {
-			// 	longestStroke = max(longestStroke, strokeHistory[i].length);
-			// }
-			// 
-			// for(var i = 0; i < strokeHistory.length; ++i) {
-			// 	drawPartialStroke(strokeHistory[i], min(percent * (longestStroke / strokeHistory[i].length), 1));
-			// }
 			
 			if(percent >= 1) {
 				isRedrawing = false;
@@ -124,10 +133,29 @@
 			background(255);
 		}
 	}
+	
+	function changeTime(evt) {
+		document.getElementById('time_value').innerHTML = evt.target.value + ' s';
+		redrawDuration = evt.target.value;
+	}
+	
+	function changeMode(evt) {
+		redrawMode = evt.target.value;
+	}
   </script>
 </head>
 
 <body id="home">
-<p>click and drag to draw. Press enter to play from beginning.</p>
+<p>Click and drag to draw. Press enter to play from beginning. Press backspace/delete to clear the drawing.</p>
+<form>
+	<label id="time_label" for="time">Playback Time:</label><br/>
+	<input type="range" oninput="changeTime(event);" step="0.1" name="time" min="0" max="10"><span id="time_value">5 s</span><br/>
+	<label id="mode_label" for="mode">Playback Mode:</label><br/>
+	<select name="mode" onchange="changeMode(event);">
+		<option value="duration">Same Duration</option>
+		<option value="speed_start">Same Speed (Synced Start)</option>
+		<option value="speed_end">Same Speed (Synced End)</option>
+	</select><br/><br/>
+</form>
 </body>
 </html>
